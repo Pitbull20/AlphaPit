@@ -26,3 +26,8 @@ The `project/public/index.php` file registers two routes:
 ## License
 
 This project is released under the MIT License.
+
+## CLI usage
+
+Run `php alpha.php serve` to start the built-in server on port 8000.
+Use `php alpha.php g <type>` commands to generate modules and other components.
