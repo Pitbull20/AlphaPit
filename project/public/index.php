@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/../src/autoload.php';
+require_once __DIR__ . '/../../framework/autoload.php';
+define('VIEW_PATH', __DIR__ . '/../views');
 
 use AlphaPit\Router;
 use AlphaPit\Database;
