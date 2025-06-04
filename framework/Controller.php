@@ -6,6 +6,7 @@ class Controller
     protected function view(string $template, array $data = []): void
     {
         extract($data);
-        include __DIR__ . "/../views/{$template}.php";
+        $base = defined('VIEW_PATH') ? VIEW_PATH : dirname(__DIR__) . '/project/views';
+        include "$base/{$template}.php";
     }
 }
