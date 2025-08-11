@@ -7,11 +7,20 @@ class Model
 {
     protected string $table;
     protected PDO $pdo;
+    protected array $fillable = [];
 
     public function __construct(PDO $pdo, string $table)
     {
         $this->pdo = $pdo;
         $this->table = $table;
+    }
+
+    protected function filterData(array $data): array
+    {
+        if ($this->fillable) {
+            $data = array_intersect_key($data, array_flip($this->fillable));
+        }
+        return $data;
     }
 
     public function find(int $id): ?array
@@ -30,7 +39,11 @@ class Model
 
     public function create(array $data): int
     {
-        $columns = implode(',', array_keys($data));
+        $data = $this->filterData($data);
+        if (!$data) {
+            throw new \InvalidArgumentException('No data provided for insert');
+        }
+        $columns = implode(',', array_map(fn($c) => "`$c`", array_keys($data)));
         $placeholders = implode(',', array_fill(0, count($data), '?'));
         $stmt = $this->pdo->prepare("INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})");
         $stmt->execute(array_values($data));
@@ -39,7 +52,11 @@ class Model
 
     public function update(int $id, array $data): bool
     {
-        $set = implode(',', array_map(fn($c) => "$c = ?", array_keys($data)));
+        $data = $this->filterData($data);
+        if (!$data) {
+            throw new \InvalidArgumentException('No data provided for update');
+        }
+        $set = implode(',', array_map(fn($c) => "`$c` = ?", array_keys($data)));
         $values = array_values($data);
         $values[] = $id;
         $stmt = $this->pdo->prepare("UPDATE {$this->table} SET {$set} WHERE id = ?");

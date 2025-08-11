@@ -16,4 +16,17 @@ class UserController extends Controller
         header('Content-Type: application/json');
         echo json_encode($this->service->all());
     }
+
+    #[Route('GET', '/users/{id}')]
+    public function show(string $id): void
+    {
+        header('Content-Type: application/json');
+        $user = $this->service->find((int)$id);
+        if ($user) {
+            echo json_encode($user);
+        } else {
+            http_response_code(404);
+            echo json_encode(['error' => 'Not Found']);
+        }
+    }
 }

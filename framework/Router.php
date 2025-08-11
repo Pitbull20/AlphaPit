@@ -11,12 +11,19 @@ class Router
 
     public function get(string $path, callable $action): void
     {
-        $this->routes['GET'][$path] = $action;
+        $this->addRoute('GET', $path, $action);
     }
 
     public function post(string $path, callable $action): void
     {
-        $this->routes['POST'][$path] = $action;
+        $this->addRoute('POST', $path, $action);
+    }
+
+    private function addRoute(string $method, string $path, callable $action): void
+    {
+        $pattern = preg_replace('#\{([^}]+)\}#', '(?P<$1>[^/]+)', $path);
+        $pattern = '#^' . $pattern . '$#';
+        $this->routes[$method][] = ['pattern' => $pattern, 'action' => $action];
     }
 
     public function registerController(string $controller, ServiceContainer $container): void
@@ -28,7 +35,7 @@ class Router
             foreach ($method->getAttributes(Route::class) as $attribute) {
                 /** @var Route $route */
                 $route = $attribute->newInstance();
-                $this->routes[$route->method][$route->path] = [$instance, $method->getName()];
+                $this->addRoute($route->method, $route->path, [$instance, $method->getName()]);
             }
         }
     }
@@ -41,14 +48,22 @@ class Router
     public function dispatch(string $method, string $uri): void
     {
         $uri = parse_url($uri, PHP_URL_PATH);
-        $action = $this->routes[$method][$uri] ?? null;
-
-        if (!$action) {
-            http_response_code(404);
-            echo 'Not Found';
-            return;
+        $routes = $this->routes[$method] ?? [];
+        foreach ($routes as $route) {
+            if (preg_match($route['pattern'], $uri, $matches)) {
+                $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
+                try {
+                    echo call_user_func_array($route['action'], $params);
+                } catch (\Throwable $e) {
+                    error_log($e->getMessage());
+                    http_response_code(500);
+                    echo 'Internal Server Error';
+                }
+                return;
+            }
         }
 
-        echo call_user_func($action);
+        http_response_code(404);
+        echo 'Not Found';
     }
 }

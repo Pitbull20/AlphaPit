@@ -11,4 +11,9 @@ class UserService
     {
         return $this->users->all();
     }
+
+    public function find(int $id): ?array
+    {
+        return $this->users->find($id);
+    }
 }
