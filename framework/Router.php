@@ -48,7 +48,12 @@ class Router
             echo 'Not Found';
             return;
         }
-
-        echo call_user_func($action);
+        try {
+            echo call_user_func($action);
+        } catch (\Throwable $e) {
+            error_log($e->getMessage());
+            http_response_code(500);
+            echo 'Internal Server Error';
+        }
     }
 }
